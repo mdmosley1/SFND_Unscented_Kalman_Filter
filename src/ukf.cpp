@@ -30,8 +30,7 @@ UKF::UKF()
     x_.fill(0.0);
 
     // initial covariance matrix
-    P_ = MatrixXd(5, 5);
-    P_.fill(1.0);
+    P_ = MatrixXd::Identity(5, 5);
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
     std_a_ = 30;
@@ -154,7 +153,6 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
     // measurement covariance matrix S
     MatrixXd S = MatrixXd(n_z,n_z);
 
-    std::cout << "transforming sigma points into measurement space..." << "\n";
     // transform sigma points into measurement space
     for (int i = 0; i < 2 * n_aug_ + 1; ++i)
     {  // 2n+1 simga points
@@ -176,14 +174,12 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
         Zsig.push_back(predictedSigmaPointMeas);
     }
 
-    std::cout << "updating mean predicted measurement..." << "\n";
     // mean predicted measurement
     z_pred.fill(0.0);
     for (int i = 0; i < 2*n_aug_ + 1; ++i)
         z_pred = z_pred + weights_[i] * Zsig[i];
 
 
-    std::cout << "computing innovation covariance matrix..." << "\n";
     // innovation covariance matrix S
     S.fill(0.0);
     for (int i = 0; i < 2 * n_aug_ + 1; ++i)
@@ -218,7 +214,6 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
 
 void UKF::UpdateState(const MeasurementPackage& _meas, PredictionData& _pData)
 {
-    std::cout << __FUNCTION__ << std::endl;
     // Predict Measurement
     // TODO: Make these two predict functions a method of PredictionData
     if (_meas.sensor_type_ == MeasurementPackage::RADAR)
@@ -237,7 +232,6 @@ void UKF::UpdateState(const MeasurementPackage& _meas, PredictionData& _pData)
 
 std::vector<Eigen::VectorXd> PredictSigmaPoints(std::vector<Eigen::VectorXd> _sigmaPts, double delta_t)
 {
-    std::cout << __FUNCTION__ << std::endl;
     // predict sigma points
     std::vector<Eigen::VectorXd> predictedSigmaPts;
     for (auto& sigmaPt : _sigmaPts)
@@ -286,9 +280,9 @@ std::vector<Eigen::VectorXd> PredictSigmaPoints(std::vector<Eigen::VectorXd> _si
         predictedSigmaPts.push_back(predictedSigmaPt);
     }
 
-    std::cout << "Predicted Sigma Points:" << "\n";
-    for (auto& p : predictedSigmaPts)
-        std::cout << "sigma point:\n " << p << "\n\n";
+    // std::cout << "Predicted Sigma Points:" << "\n";
+    // for (auto& p : predictedSigmaPts)
+    //     std::cout << "sigma point:\n " << p << "\n\n";
     
     return predictedSigmaPts;
 }
@@ -303,7 +297,7 @@ PredictionData UKF::Prediction(double delta_t)
 
     delta_t = delta_t / 1000000.0; // convert time into seconds
 
-    std::cout << "UKF::Prediction" << std::endl;
+    //std::cout << "UKF::Prediction" << std::endl;
 
     /**
      * Estimate the object's location.  Modify the state vector,
@@ -333,7 +327,7 @@ PredictionData UKF::Prediction(double delta_t)
 
 Eigen::VectorXd UKF::GetState()
 {
-    std::cout << "Get State!" << std::endl;
+    //std::cout << "Get State!" << std::endl;
     return x_;
 }
 
@@ -367,11 +361,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
         return;
 
 
-    std::cout << "ProcessMeasurment" << std::endl;
+    //std::cout << "ProcessMeasurment" << std::endl;
     if (!is_initialized_)
     {
         is_initialized_ = true;
-        std::cout << "Raw measurement: " << meas_package.raw_measurements_ << "\n";
+        //std::cout << "Raw measurement: " << meas_package.raw_measurements_ << "\n";
         SetStateFromMeasurement(meas_package.raw_measurements_, meas_package.sensor_type_);
         return;
     }
@@ -423,11 +417,11 @@ std::vector<Eigen::VectorXd> UKF::GenerateAugmentedSigmaPoints(Eigen::VectorXd _
         sigmaPts.push_back(x_aug - sqrt(lambda_ + n_aug_) * L.col(i));
     }
     
-    std::cout << "Sigma Points:" << "\n";
+    //std::cout << "Sigma Points:" << "\n";
     for (auto& p : sigmaPts)
     {
         assert(std::fabs(p[3] < 10.0));
-        std::cout << "sigma point:\n " << p << "\n\n";
+        //std::cout << "sigma point:\n " << p << "\n\n";
     }
     
     

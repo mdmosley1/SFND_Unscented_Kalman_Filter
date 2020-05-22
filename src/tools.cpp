@@ -25,7 +25,10 @@ lmarker Tools::lidarSense(Car& car, pcl::visualization::PCLVisualizer::Ptr& view
 
     lmarker marker = lmarker(car.position.x + noise(0.15,timestamp), car.position.y + noise(0.15,timestamp+1));
     if(visualize)
-        viewer->addSphere(pcl::PointXYZ(marker.x,marker.y,3.0),0.5, 1, 0, 0,car.name+"_lmarker");
+    {
+        double radius = 0.5; double r = 1; double g = 0; double b = 0;
+        viewer->addSphere(pcl::PointXYZ(marker.x,marker.y,3.0), radius, r, g, b, car.name+"_lmarker");
+    }
 
     meas_package.raw_measurements_ << marker.x, marker.y;
     meas_package.timestamp_ = timestamp;
@@ -47,8 +50,16 @@ rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::
     rmarker marker = rmarker(rho+noise(0.3,timestamp+2), phi+noise(0.03,timestamp+3), rho_dot+noise(0.3,timestamp+4));
     if(visualize)
     {
-        viewer->addLine(pcl::PointXYZ(ego.position.x, ego.position.y, 3.0), pcl::PointXYZ(ego.position.x+marker.rho*cos(marker.phi), ego.position.y+marker.rho*sin(marker.phi), 3.0), 1, 0, 1, car.name+"_rho");
-        viewer->addArrow(pcl::PointXYZ(ego.position.x+marker.rho*cos(marker.phi), ego.position.y+marker.rho*sin(marker.phi), 3.0), pcl::PointXYZ(ego.position.x+marker.rho*cos(marker.phi)+marker.rho_dot*cos(marker.phi), ego.position.y+marker.rho*sin(marker.phi)+marker.rho_dot*sin(marker.phi), 3.0), 1, 0, 1, car.name+"_rho_dot");
+        // draw line from ego vehicle to radar return
+        // viewer->addLine(pcl::PointXYZ(ego.position.x, ego.position.y, 3.0),
+        //                 pcl::PointXYZ(ego.position.x+ marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
+        //                 1, 0, 1, car.name+"_rho");
+
+
+        // draw arrow from radar return in direction of velocity, scaled by speed. Label the arrow with the car's speed
+        viewer->addArrow(pcl::PointXYZ(ego.position.x + marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
+                         pcl::PointXYZ(ego.position.x + marker.rho*cos(marker.phi) + marker.rho_dot*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi)+marker.rho_dot*sin(marker.phi), 3.0),
+                         1, 0, 1, car.name+"_rho_dot");
     }
 	
     MeasurementPackage meas_package;
