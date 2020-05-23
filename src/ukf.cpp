@@ -33,10 +33,10 @@ UKF::UKF()
     P_ = MatrixXd::Identity(5, 5);
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 2.5;
+    std_a_ = 1.0;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.9;
+    std_yawdd_ = 0.1;
   
     /**
      * DO NOT MODIFY measurement noise values below.
@@ -51,15 +51,12 @@ UKF::UKF()
 
     // Radar measurement noise standard deviation radius in m
     std_radr_ = 0.3;
-    //std_radr_ = 0.003;
 
     // Radar measurement noise standard deviation angle in rad
     std_radphi_ = 0.03;
-    //std_radphi_ = 0.0003;
 
     // Radar measurement noise standard deviation radius change in m/s
     std_radrd_ = 0.3;
-    //std_radrd_ = 0.003;
   
     /**
      * End DO NOT MODIFY section for measurement noise values 
@@ -295,14 +292,15 @@ std::vector<Eigen::VectorXd> PredictSigmaPoints(std::vector<Eigen::VectorXd> _si
             py_p = p_y + v*delta_t*sin(yaw);
         }
 
-        double v_p = v;
-        double yaw_p = yaw + yawd*delta_t;
-        double yawd_p = yawd;
+        
+        double v_p = v;  // predicted velocity
+        double yaw_p = yaw + yawd*delta_t; // predicted yaw
+        double yawd_p = yawd; // predicted yaw rate
 
         // add noise
-        px_p = px_p + 0.5*nu_a*delta_t*delta_t * cos(yaw);
-        py_p = py_p + 0.5*nu_a*delta_t*delta_t * sin(yaw);
-        v_p = v_p + nu_a*delta_t;
+        px_p += 0.5*nu_a*delta_t*delta_t * cos(yaw);
+        py_p += 0.5*nu_a*delta_t*delta_t * sin(yaw);
+        v_p += nu_a*delta_t;
 
         yaw_p = yaw_p + 0.5*nu_yawdd*delta_t*delta_t;
         yawd_p = yawd_p + nu_yawdd*delta_t;
@@ -329,23 +327,25 @@ std::vector<Eigen::VectorXd> PredictSigmaPoints(std::vector<Eigen::VectorXd> _si
  * matrix
  * @param delta_t Time between k and k+1 in s
  */
-PredictionData UKF::Prediction(double delta_t) const
+PredictionData UKF::Prediction(const double delta_t_s,
+                               const VectorXd& x,
+                               const MatrixXd& P) const
 {
-    delta_t = delta_t / 1000000.0; // convert time into seconds
+    
     // (I) generate the sigma points and weights
     // also return weights. create new struct called weightedSigmaPoint
-    auto sigmaPts = GenerateAugmentedSigmaPoints(x_, P_);
+    auto sigmaPts = GenerateAugmentedSigmaPoints(x, P);
     
     // (II) use sigma points to predict the state and error covariance
-    auto predictedSigmaPts = PredictSigmaPoints(sigmaPts, delta_t);
+    auto predictedSigmaPts = PredictSigmaPoints(sigmaPts, delta_t_s);
 
     // (III) Compute the predicted mean and covariance from the sigma points
     VectorXd x_predict; // predicted mean state
     MatrixXd P_predict; // predicted covariance
     std::tie(x_predict, P_predict) = PredictMeanAndCovariance(predictedSigmaPts);
 
-    std::cout << "Mean predicted state:\n ";
-    PrintStateVector(x_predict);
+    //std::cout << "Mean predicted state:\n ";
+    //PrintStateVector(x_predict);
 
     PredictionData pData;
     pData.Xsig_pred = predictedSigmaPts;
@@ -355,10 +355,15 @@ PredictionData UKF::Prediction(double delta_t) const
     return pData;
 }
 
-Eigen::VectorXd UKF::GetState()
+Eigen::VectorXd UKF::GetState() const
 {
     //std::cout << "Get State!" << std::endl;
     return x_;
+}
+
+Eigen::MatrixXd UKF::GetCovariance() const
+{
+    return P_;
 }
 
 void UKF::SetStateFromMeasurement(Eigen::VectorXd _z, MeasurementPackage::SensorType _type)
@@ -396,21 +401,25 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
         is_initialized_ = true;
         //std::cout << "Raw measurement: " << meas_package.raw_measurements_ << "\n";
         SetStateFromMeasurement(meas_package.raw_measurements_, meas_package.sensor_type_);
+
+        lastTime_ = meas_package.timestamp_;
         return;
     }
     
-    static double lastTime = 0.0;
-    double dt = meas_package.timestamp_ - lastTime;
-    lastTime = meas_package.timestamp_;
+    double dt = meas_package.timestamp_ - lastTime_;
+    lastTime_ = meas_package.timestamp_;
 
-    PredictionData p = Prediction(dt);
+    double delta_t_s = dt / 1000000.0; // convert time into seconds
+
+    PredictionData p = Prediction(delta_t_s, x_, P_);
+
     UpdateState(meas_package, p);
 }
 
 // this function also takes into account process noise when generating the sigma points
 std::vector<Eigen::VectorXd> UKF::GenerateAugmentedSigmaPoints(Eigen::VectorXd _x, Eigen::MatrixXd _P) const
 {
-    std::cout << __FUNCTION__ << std::endl;
+    //std::cout << __FUNCTION__ << std::endl;
 
     // create augmented mean vector
     VectorXd x_aug = VectorXd(n_aug_);
@@ -472,7 +481,7 @@ std::vector<Eigen::VectorXd> UKF::GenerateSigmaPoints(Eigen::VectorXd _x, Eigen:
 
 std::tuple<VectorXd, MatrixXd> UKF::PredictMeanAndCovariance(const std::vector<Eigen::VectorXd>& predictedSigmaPoints) const
 { 
-    std::cout << __FUNCTION__ << std::endl;    
+    //std::cout << __FUNCTION__ << std::endl;    
     
     // predicted state mean
     VectorXd x = VectorXd(n_x_);
@@ -493,7 +502,7 @@ std::tuple<VectorXd, MatrixXd> UKF::PredictMeanAndCovariance(const std::vector<E
         P = P + weights_[i] * x_diff * x_diff.transpose();
     }
 
-    std::cout << __FUNCTION__ << " EXIT "<< std::endl;
+    //std::cout << __FUNCTION__ << " EXIT "<< std::endl;
     
     return std::make_tuple(x, P);
 }

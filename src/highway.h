@@ -20,13 +20,13 @@ public:
     // Parameters 
     // --------------------------------
     // Set which cars to track with UKF
-    std::vector<bool> trackCars = {false,true,false};
+    std::vector<bool> trackCars = {true,true,true};
     // Visualize sensor measurements
     bool visualize_lidar = true;
     bool visualize_radar = true;
     bool visualize_pcd = false;
     // Predict path in the future using UKF
-    double projectedTime = 5;
+    double projectedTime = 1;
     int projectedSteps = 5;
     // --------------------------------
 

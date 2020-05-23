@@ -36,9 +36,15 @@ class UKF
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
   
-  PredictionData Prediction(double delta_t) const;
+  
+  PredictionData Prediction(const double delta_t,
+                            const Eigen::VectorXd& x,
+                            const Eigen::MatrixXd& P) const;
 
-  Eigen::VectorXd GetState();
+  Eigen::VectorXd GetState() const;
+
+  Eigen::MatrixXd GetCovariance() const;
+    
 
  private:
 
@@ -117,6 +123,8 @@ class UKF
 
   // Sigma point spreading parameter
     double lambda_ = 3 - n_aug_;
+
+    double lastTime_ = 0.0;
     
 };
 
