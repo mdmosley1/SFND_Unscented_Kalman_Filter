@@ -141,9 +141,9 @@ void UKF::UpdateRadar(const PredictionData& _pData, const VectorXd _z)
 
     auto x_Previous = x_;
     // update state mean and covariance matrix
-    //x_ = x_ + K * z_diff;
-    x_ = x_ + K * z_diff;
-    P_ = P_ - K*_pData.S*K.transpose();
+    // the updated state is a combination of the prediction and the measurement
+    x_ = _pData.x + K * z_diff;
+    P_ = _pData.P - K*_pData.S*K.transpose();
 
     //NormalizeAngle(x_(3));
 
@@ -332,17 +332,6 @@ std::vector<Eigen::VectorXd> PredictSigmaPoints(std::vector<Eigen::VectorXd> _si
 PredictionData UKF::Prediction(double delta_t) const
 {
     delta_t = delta_t / 1000000.0; // convert time into seconds
-
-    assert(fabs(delta_t - 0.033) < 0.001); // frame rate is 30 frames per second
-
-    //std::cout << "UKF::Prediction" << std::endl;
-
-    /**
-     * Estimate the object's location.  Modify the state vector,
-     * x_. Predict sigma points, the state, and the state covariance
-     * matrix.
-     */
-
     // (I) generate the sigma points and weights
     // also return weights. create new struct called weightedSigmaPoint
     auto sigmaPts = GenerateAugmentedSigmaPoints(x_, P_);
@@ -415,11 +404,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
     lastTime = meas_package.timestamp_;
 
     PredictionData p = Prediction(dt);
-
-    // set the state/covariance equal to the prediction
-    x_ = p.x;
-    P_ = p.P;
-
     UpdateState(meas_package, p);
 }
 
@@ -456,14 +440,6 @@ std::vector<Eigen::VectorXd> UKF::GenerateAugmentedSigmaPoints(Eigen::VectorXd _
         sigmaPts.push_back(x_aug + sqrt(lambda_ + n_aug_) * L.col(i));
         sigmaPts.push_back(x_aug - sqrt(lambda_ + n_aug_) * L.col(i));
     }
-    
-    //std::cout << "Sigma Points:" << "\n";
-    // for (auto& p : sigmaPts)
-    // {
-    //     std::cout << "sigma point:\n " << p << "\n\n";
-    //     assert(std::fabs(p[3] < 10.0));
-    // }
-    
     
     return sigmaPts;
 }
