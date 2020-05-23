@@ -36,7 +36,7 @@ class UKF
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
   
-  PredictionData Prediction(double delta_t);
+  PredictionData Prediction(double delta_t) const;
 
   Eigen::VectorXd GetState();
 
@@ -46,10 +46,10 @@ class UKF
 
   std::tuple<Eigen::VectorXd, Eigen::MatrixXd, std::vector<Eigen::VectorXd>> PredictRadarMeasurement(const std::vector<Eigen::VectorXd> predictedSigmaPoints);
 
-  std::tuple<Eigen::VectorXd, Eigen::MatrixXd> PredictMeanAndCovariance(const std::vector<Eigen::VectorXd>& predictedSigmaPoints);
+  std::tuple<Eigen::VectorXd, Eigen::MatrixXd> PredictMeanAndCovariance(const std::vector<Eigen::VectorXd>& predictedSigmaPoints) const;
 
-  std::vector<Eigen::VectorXd> GenerateAugmentedSigmaPoints(Eigen::VectorXd _x, Eigen::MatrixXd _P);
-  std::vector<Eigen::VectorXd> GenerateSigmaPoints(Eigen::VectorXd _x, Eigen::MatrixXd _P);
+  std::vector<Eigen::VectorXd> GenerateAugmentedSigmaPoints(Eigen::VectorXd _x, Eigen::MatrixXd _P) const;
+  std::vector<Eigen::VectorXd> GenerateSigmaPoints(Eigen::VectorXd _x, Eigen::MatrixXd _P) const;
   
   void UpdateState(const MeasurementPackage& meas, PredictionData& _pData);
         
@@ -116,7 +116,8 @@ class UKF
    int n_aug_ = 7;
 
   // Sigma point spreading parameter
-   double lambda_ = 3 - n_aug_;
+    double lambda_ = 3 - n_aug_;
+    
 };
 
 #endif  // UKF_H

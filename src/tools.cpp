@@ -38,16 +38,25 @@ lmarker Tools::lidarSense(Car& car, pcl::visualization::PCLVisualizer::Ptr& view
     return marker;
 }
 
+void PrintCarPosition(Car& car)
+{
+    cout << "Car Position" << "\n";
+    cout << "posx = " << car.position.x << "\n";
+    cout << "posy = " << car.position.y << "\n";
+    cout << "vel = " << car.velocity << "\n";
+    cout << "yaw = " << car.angle << "\n";
+}
+
 // sense where a car is located using radar measurement
 rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::Ptr& viewer, long long timestamp, bool visualize)
 {
-
-    
     double rho = sqrt((car.position.x-ego.position.x)*(car.position.x-ego.position.x)+(car.position.y-ego.position.y)*(car.position.y-ego.position.y));
     double phi = atan2(car.position.y-ego.position.y,car.position.x-ego.position.x);
     double rho_dot = (car.velocity*cos(car.angle)*rho*cos(phi) + car.velocity*sin(car.angle)*rho*sin(phi))/rho;
 
-    rmarker marker = rmarker(rho+noise(0.3,timestamp+2), phi+noise(0.03,timestamp+3), rho_dot+noise(0.3,timestamp+4));
+    //rmarker marker = rmarker(rho+noise(0.001,timestamp+2), phi+noise(0.0001,timestamp+3), rho_dot+noise(0.001,timestamp+4));
+    // Temporary test change
+     rmarker marker = rmarker(rho+noise(0.3,timestamp+2), phi+noise(0.03,timestamp+3), rho_dot+noise(0.3,timestamp+4));
     if(visualize)
     {
         // draw line from ego vehicle to radar return
@@ -68,7 +77,13 @@ rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::
     meas_package.raw_measurements_ << marker.rho, marker.phi, marker.rho_dot;
     meas_package.timestamp_ = timestamp;
 
+    PrintCarPosition(car);
 
+
+    cout << "Actual radar measurement: " << "\n";
+    std::cout << "range      = " << marker.rho << "\n";
+    std::cout << "angle      = " << marker.phi << "\n";
+    std::cout << "range rate = " << marker.rho_dot << "\n\n";  
     // if this is the first measurement, then set the state to the measurement
     car.ukf.ProcessMeasurement(meas_package);
 
@@ -80,8 +95,7 @@ rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::
 // int steps:: how many steps to show between present and time and future time
 void Tools::ukfResults(Car car, pcl::visualization::PCLVisualizer::Ptr& viewer, double time, int steps)
 {
-    UKF ukf = car.ukf;
-    auto x = ukf.GetState();
+    auto x = car.ukf.GetState();
     viewer->addSphere(pcl::PointXYZ(x[0], x[1], 3.5), 0.5, 0, 1, 0,car.name+"_ukf");
     viewer->addArrow(pcl::PointXYZ(x[0], x[1], 3.5), pcl::PointXYZ(x[0] + x[2]*cos(x[3]), x[1] + x[2]*sin(x[3]), 3.5), 0, 1, 0, car.name+"_ukf_vel");
     if(time > 0)
@@ -90,7 +104,7 @@ void Tools::ukfResults(Car car, pcl::visualization::PCLVisualizer::Ptr& viewer, 
         double ct = dt;
         while(ct <= time)
         {
-            auto pData = ukf.Prediction(dt);
+            auto pData = car.ukf.Prediction(dt);
             auto x_p = pData.x;
 
             viewer->addSphere(pcl::PointXYZ(x_p[0], x_p[1], 3.5), 0.5, 0, 1, 0,car.name+"_ukf"+std::to_string(ct));
