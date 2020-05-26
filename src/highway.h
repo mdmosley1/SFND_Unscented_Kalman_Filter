@@ -20,7 +20,7 @@ public:
     // Parameters 
     // --------------------------------
     // Set which cars to track with UKF
-    std::vector<bool> trackCars = {true,true,true};
+    std::vector<bool> trackCars = {true, true, true};
     // Visualize sensor measurements
     bool visualize_lidar = true;
     bool visualize_radar = true;
@@ -29,6 +29,23 @@ public:
     double projectedTime = 1;
     int projectedSteps = 5;
     // --------------------------------
+
+    Car InitializeCar3()
+        {
+            Car car3(Vect3(-12, 0, 0), Vect3(4, 2, 2), Color(0, 0, 1), 1, 0, 2, "car3");
+            std::vector<accuation> car3_instructions;
+            car3_instructions.emplace_back(0.5*1e6, 2.0, 1.0);
+            car3_instructions.emplace_back(1.0*1e6, 2.5, 0.0);
+            car3_instructions.emplace_back(3.2*1e6, 0.0, -1.0);
+            car3_instructions.emplace_back(3.3*1e6, 2.0, 0.0);
+            car3_instructions.emplace_back(4.5*1e6, 0.0, 0.0);
+            car3_instructions.emplace_back(5.5*1e6, -2.0, 0.0);
+            car3_instructions.emplace_back(7.5*1e6, 0.0, 0.0);
+
+            car3.setInstructions(car3_instructions);
+
+            return car3;
+        }
 
     Highway(pcl::visualization::PCLVisualizer::Ptr& viewer)
 	{
@@ -70,24 +87,9 @@ public:
                 car2.setUKF(ukf2);
             }
             traffic.push_back(car2);
-	
-            Car car3(Vect3(-12, 0, 0), Vect3(4, 2, 2), Color(0, 0, 1), 1, 0, 2, "car3");
-            std::vector<accuation> car3_instructions;
-            a = accuation(0.5*1e6, 2.0, 1.0);
-            car3_instructions.push_back(a);
-            a = accuation(1.0*1e6, 2.5, 0.0);
-            car3_instructions.push_back(a);
-            a = accuation(3.2*1e6, 0.0, -1.0);
-            car3_instructions.push_back(a);
-            a = accuation(3.3*1e6, 2.0, 0.0);
-            car3_instructions.push_back(a);
-            a = accuation(4.5*1e6, 0.0, 0.0);
-            car3_instructions.push_back(a);
-            a = accuation(5.5*1e6, -2.0, 0.0);
-            car3_instructions.push_back(a);
-            a = accuation(7.5*1e6, 0.0, 0.0);
-            car3_instructions.push_back(a);
-            car3.setInstructions(car3_instructions);
+
+            Car car3 = InitializeCar3();
+            
             if( trackCars[2] )
             {
                 UKF ukf3;

@@ -14,7 +14,12 @@ int main(int argc, char** argv)
     // set camera position and angle
     viewer->initCameraParameters();
     float x_pos = 0;
-    viewer->setCameraPosition ( x_pos-26, 0, 15.0, x_pos+25, 0, 0, 0, 0, 1);
+
+
+    //viewer->setCameraPosition ( x_pos-26, 0, 15.0, x_pos+25, 0, 0, 0, 0, 1);
+    viewer->setCameraPosition ( x_pos-26, 0, 100.0,
+                                x_pos+25, 0,     0,
+                                       0, 0,     1);
 
     Highway highway(viewer);
 
@@ -38,5 +43,9 @@ int main(int argc, char** argv)
         viewer->spinOnce(1000/frame_per_sec);
         frame_count++;
         time_us = 1000000*frame_count/frame_per_sec;
+
+        // pause after each frame update
+        //std::cout << "Press ENTER to continue..." << "\n";
+        //getchar();
     }
 }

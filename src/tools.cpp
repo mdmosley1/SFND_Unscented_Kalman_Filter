@@ -60,9 +60,9 @@ rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::
     if(visualize)
     {
         // draw line from ego vehicle to radar return
-        // viewer->addLine(pcl::PointXYZ(ego.position.x, ego.position.y, 3.0),
-        //                 pcl::PointXYZ(ego.position.x+ marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
-        //                 1, 0, 1, car.name+"_rho");
+        viewer->addLine(pcl::PointXYZ(ego.position.x, ego.position.y, 3.0),
+                        pcl::PointXYZ(ego.position.x+ marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
+                        1, 0, 1, car.name+"_rho");
 
 
         // draw arrow from radar return in direction of velocity, scaled by speed. Label the arrow with the car's speed

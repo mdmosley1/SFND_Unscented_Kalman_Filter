@@ -134,7 +134,7 @@ void UKF::UpdateRadar(const PredictionData& _pData, const VectorXd _z)
     VectorXd z_diff = _z - _pData.z;
 
     // angle normalization
-    // NormalizeAngle(z_diff(1));
+    NormalizeAngle(z_diff(1));
 
     auto x_Previous = x_;
     // update state mean and covariance matrix
@@ -147,6 +147,8 @@ void UKF::UpdateRadar(const PredictionData& _pData, const VectorXd _z)
     // print result
     std::cout << "\n\n";
     std::cout << "UKF:UpdateRadar" << "\n";
+    std::cout << "z = \n" << _z << "\n";
+    std::cout << "z_p = \n" << _pData.z << "\n";
     std::cout << "residual z_diff: \n" << z_diff << "\n";
     std::cout << "S: \n" << _pData.S << "\n";
     std::cout << "S^-1: \n" << _pData.S.inverse() << "\n";
@@ -169,6 +171,14 @@ void PrintMeasurementVector(VectorXd z)
 
     
 }
+
+double WrapPi(double phi)
+{
+    if (phi < 0)
+        phi += 2*M_PI;
+    return phi;
+}
+
 // output is 
 std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasurement(const std::vector<Eigen::VectorXd> predictedSigmaPoints)
 {
@@ -182,6 +192,7 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
     MatrixXd S = MatrixXd(n_z,n_z);
 
     // transform sigma points into measurement space
+    std::cout << "\n\nPredicted sigma points:" << "\n";
     for (int i = 0; i < 2 * n_aug_ + 1; ++i)
     {  // 2n+1 simga points
         // extract values for better readability
@@ -197,9 +208,12 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
         // the radar measurement model
         VectorXd predictedSigmaPointMeas = VectorXd(n_z);
         predictedSigmaPointMeas(0) = sqrt(p_x*p_x + p_y*p_y);                       // r
-        predictedSigmaPointMeas(1) = atan2(p_y,p_x);                                // phi
+        predictedSigmaPointMeas(1) = WrapPi(atan2(p_y,p_x));                        // phi
         predictedSigmaPointMeas(2) = (p_x*v1 + p_y*v2) / sqrt(p_x*p_x + p_y*p_y);   // r_dot
         Zsig.push_back(predictedSigmaPointMeas);
+        std::cout << "p_y = " << p_y << "\n";
+        std::cout << "p_x = " << p_x << "\n";
+        std::cout << "phi = " << predictedSigmaPointMeas(1) << "\n";
     }
 
     // mean predicted measurement
@@ -207,9 +221,10 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
     for (int i = 0; i < 2*n_aug_ + 1; ++i)
         z_pred = z_pred + weights_[i] * Zsig[i];
 
+    NormalizeAngle(z_pred[1]);
+
     std::cout << "Print mean predicted measurement:" << "\n";
     PrintMeasurementVector(z_pred);
-
 
     // innovation covariance matrix S
     S.fill(0.0);
