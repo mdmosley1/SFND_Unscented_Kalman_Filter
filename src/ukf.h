@@ -52,6 +52,8 @@ class UKF
 
   std::tuple<Eigen::VectorXd, Eigen::MatrixXd, std::vector<Eigen::VectorXd>> PredictRadarMeasurement(const std::vector<Eigen::VectorXd> predictedSigmaPoints);
 
+    std::tuple<Eigen::VectorXd, Eigen::MatrixXd, std::vector<Eigen::VectorXd>> PredictLidarMeasurement(const std::vector<Eigen::VectorXd> predictedSigmaPoints);
+
   std::tuple<Eigen::VectorXd, Eigen::MatrixXd> PredictMeanAndCovariance(const std::vector<Eigen::VectorXd>& predictedSigmaPoints) const;
 
   std::vector<Eigen::VectorXd> GenerateAugmentedSigmaPoints(Eigen::VectorXd _x, Eigen::MatrixXd _P) const;
@@ -63,7 +65,7 @@ class UKF
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateLidar(const PredictionData& _pData, const Eigen::VectorXd _z);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
