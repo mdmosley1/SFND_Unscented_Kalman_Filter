@@ -34,6 +34,7 @@ public:
         {
             Car car3(Vect3(-12, 0, 0), Vect3(4, 2, 2), Color(0, 0, 1), 1, 0, 2, "car3");
             std::vector<accuation> car3_instructions;
+            // time (us), acceleration, steering
             car3_instructions.emplace_back(0.5*1e6, 2.0, 1.0);
             car3_instructions.emplace_back(1.0*1e6, 2.5, 0.0);
             car3_instructions.emplace_back(3.2*1e6, 0.0, -1.0);
@@ -52,11 +53,15 @@ public:
 
             tools = Tools();
 	
-            egoCar = Car(Vect3(0, 0, 0), Vect3(4, 2, 2), Color(0, 1, 0), 0, 0, 2, "egoCar");
+            egoCar = Car(Vect3(0, 0, 0),
+                         Vect3(4, 2, 2),
+                         Color(0, 1, 0),
+                         0, 0, 2, "egoCar");
 		
             Car car1(Vect3(-10, 4, 0), Vect3(4, 2, 2), Color(0, 0, 1), 5, 0, 2, "car1");
 		
             std::vector<accuation> car1_instructions;
+            // time (us), acceleration, steering
             accuation a = accuation(0.5*1e6, 0.5, 0.0);
             car1_instructions.push_back(a);
             a = accuation(2.2*1e6, 0.0, -0.2);
@@ -110,7 +115,6 @@ public:
     // timestamp is in microseconds
     void stepHighway(double egoVelocity, long long timestamp, int frame_per_sec, pcl::visualization::PCLVisualizer::Ptr& viewer)
 	{
-            std::cout << "Step highway!" << std::endl;
             if(visualize_pcd)
             {
                 pcl::PointCloud<pcl::PointXYZ>::Ptr trafficCloud = tools.loadPcd("../src/sensors/data/pcd/highway_"+std::to_string(timestamp)+".pcd");
@@ -146,7 +150,15 @@ public:
                     double v2 = sin(yaw)*v;
                     estimate << x[0], x[1], v1, v2;
                     tools.estimations.push_back(estimate);
-	
+                    // std::cout << "\nEstimated velocity (x,y)" << "\n";
+                    // std::cout << "vx = " << v1 << "\n";
+                    // std::cout << "vy = " << v2 << "\n";
+
+                    // std::cout << "\nGround truth velocity (x,y)" << "\n";
+                    // std::cout << "vx = " << gt[2] << "\n";
+                    // std::cout << "vy = " << gt[3] << "\n";
+
+                    
                 }
             }
             viewer->addText("Accuracy - RMSE:", 30, 300, 20, 1, 1, 1, "rmse");

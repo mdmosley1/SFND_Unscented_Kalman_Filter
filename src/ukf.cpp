@@ -32,11 +32,14 @@ UKF::UKF()
     // initial covariance matrix
     P_ = MatrixXd::Identity(5, 5);
 
+    // set covariance low for the yaw angle since we can assume we have good estimate already (we are on highway and vehicles are driving same direction)
+    P_(3,3) = 0.001;
+
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 1.0;
+    std_a_ = 2.4;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.1;
+    std_yawdd_ = 0.5;
   
     /**
      * DO NOT MODIFY measurement noise values below.
@@ -143,7 +146,7 @@ void UKF::UpdateRadar(const PredictionData& _pData, const VectorXd _z)
 
     //NormalizeAngle(x_(3));
 
-    // print result
+    //print result
     std::cout << "\n\n";
     std::cout << "UKF:UpdateRadar" << "\n";
     std::cout << "z = \n" << _z << "\n";
@@ -158,7 +161,7 @@ void UKF::UpdateRadar(const PredictionData& _pData, const VectorXd _z)
     std::cout << "Updated state x: " << std::endl;
     PrintStateVector(x_);
     std::cout << "\n\n";
-    //std::cout << "Updated state covariance P: " << std::endl << P_ << std::endl;
+    std::cout << "Updated state covariance P: " << std::endl << P_ << std::endl;
 }
 
 
@@ -206,7 +209,7 @@ std::tuple<VectorXd, MatrixXd, std::vector<VectorXd>> UKF::PredictRadarMeasureme
         // the radar measurement model
         VectorXd predictedSigmaPointMeas = VectorXd(n_z);
         predictedSigmaPointMeas(0) = sqrt(p_x*p_x + p_y*p_y);                       // r
-        predictedSigmaPointMeas(1) = WrapPi(atan2(p_y,p_x));                        // phi
+        predictedSigmaPointMeas(1) = atan2(p_y,p_x);                        // phi
         predictedSigmaPointMeas(2) = (p_x*v1 + p_y*v2) / sqrt(p_x*p_x + p_y*p_y);   // r_dot
         Zsig.push_back(predictedSigmaPointMeas);
     }
@@ -436,6 +439,7 @@ void UKF::SetStateFromMeasurement(Eigen::VectorXd _z, MeasurementPackage::Sensor
         // compute position from radar measurement
         double range = _z[0];
         double angle = _z[1];
+        double range_rate = _z[2];
         x_[0] = range*cos(angle);
         x_[1] = range*sin(angle);
     }
@@ -464,6 +468,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
     
     double dt = meas_package.timestamp_ - lastTime_;
     lastTime_ = meas_package.timestamp_;
+
+    if (dt == 0.0)
+        std::cout << "WARN: dt = 0!" << "\n";
 
     double delta_t_s = dt / 1000000.0; // convert time into seconds
 

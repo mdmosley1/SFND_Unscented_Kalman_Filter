@@ -118,15 +118,15 @@ class UKF
   std::vector<double> weights_;
 
   // State dimension
-   int n_x_ = 5;
+  int n_x_ = 5;
 
   // Augmented state dimension
-   int n_aug_ = 7;
+  int n_aug_ = 7;
 
   // Sigma point spreading parameter
-    double lambda_ = 3 - n_aug_;
+  double lambda_ = 3 - n_aug_;
 
-    double lastTime_ = 0.0;
+  double lastTime_ = 0.0;
     
 };
 

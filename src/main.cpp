@@ -17,9 +17,13 @@ int main(int argc, char** argv)
 
 
     //viewer->setCameraPosition ( x_pos-26, 0, 15.0, x_pos+25, 0, 0, 0, 0, 1);
-    viewer->setCameraPosition ( x_pos-26, 0, 100.0,
-                                x_pos+25, 0,     0,
-                                       0, 0,     1);
+     viewer->setCameraPosition ( x_pos-26, 0, 100.0,
+                                 x_pos+25, 0,     0,
+                                        0, 0,     1);
+
+    // viewer->setCameraPosition ( 20, 0, 20.0,
+    //                             20, 0,    0,
+    //                             10, 0,    0);
 
     Highway highway(viewer);
 

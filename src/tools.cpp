@@ -26,7 +26,7 @@ lmarker Tools::lidarSense(Car& car, pcl::visualization::PCLVisualizer::Ptr& view
     lmarker marker = lmarker(car.position.x + noise(0.15,timestamp), car.position.y + noise(0.15,timestamp+1));
     if(visualize)
     {
-        double radius = 0.5; double r = 1; double g = 0; double b = 0;
+        double radius = 0.25; double r = 1; double g = 0; double b = 0;
         viewer->addSphere(pcl::PointXYZ(marker.x,marker.y,3.0), radius, r, g, b, car.name+"_lmarker");
     }
 
@@ -40,7 +40,7 @@ lmarker Tools::lidarSense(Car& car, pcl::visualization::PCLVisualizer::Ptr& view
 
 void PrintCarPosition(Car& car)
 {
-    cout << "Car Position" << "\n";
+    cout << "\nCar Position" << "\n";
     cout << "posx = " << car.position.x << "\n";
     cout << "posy = " << car.position.y << "\n";
     cout << "vel = " << car.velocity << "\n";
@@ -54,21 +54,25 @@ rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::
     double phi = atan2(car.position.y-ego.position.y,car.position.x-ego.position.x);
     double rho_dot = (car.velocity*cos(car.angle)*rho*cos(phi) + car.velocity*sin(car.angle)*rho*sin(phi))/rho;
 
-    //rmarker marker = rmarker(rho+noise(0.001,timestamp+2), phi+noise(0.0001,timestamp+3), rho_dot+noise(0.001,timestamp+4));
-    // Temporary test change
-    rmarker marker = rmarker(rho+noise(0.3,timestamp+2), phi+noise(0.03,timestamp+3), rho_dot+noise(0.3,timestamp+4));
+    rmarker marker = rmarker(rho+noise(0.3,timestamp+2),
+                             phi+noise(0.03,timestamp+3),
+                             rho_dot+noise(0.3,timestamp+4));
+    
     if(visualize)
     {
         // draw line from ego vehicle to radar return
+        auto endPoint = pcl::PointXYZ(ego.position.x+ marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0);
         viewer->addLine(pcl::PointXYZ(ego.position.x, ego.position.y, 3.0),
-                        pcl::PointXYZ(ego.position.x+ marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
+                        endPoint,
                         1, 0, 1, car.name+"_rho");
+        double sphereSize = 0.2;
+        viewer->addSphere(endPoint, sphereSize, 1, 0, 1, car.name + "_radarSphere");
 
 
         // draw arrow from radar return in direction of velocity, scaled by speed. Label the arrow with the car's speed
-        viewer->addArrow(pcl::PointXYZ(ego.position.x + marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
-                         pcl::PointXYZ(ego.position.x + marker.rho*cos(marker.phi) + marker.rho_dot*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi)+marker.rho_dot*sin(marker.phi), 3.0),
-                         1, 0, 1, car.name+"_rho_dot");
+        // viewer->addArrow(pcl::PointXYZ(ego.position.x + marker.rho*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi), 3.0),
+        //                  pcl::PointXYZ(ego.position.x + marker.rho*cos(marker.phi) + marker.rho_dot*cos(marker.phi), ego.position.y + marker.rho*sin(marker.phi)+marker.rho_dot*sin(marker.phi), 3.0),
+        //                  1, 0, 1, car.name+"_rho_dot");
     }
 	
     MeasurementPackage meas_package;
@@ -77,13 +81,13 @@ rmarker Tools::radarSense(Car& car, Car ego, pcl::visualization::PCLVisualizer::
     meas_package.raw_measurements_ << marker.rho, marker.phi, marker.rho_dot;
     meas_package.timestamp_ = timestamp;
 
-    PrintCarPosition(car);
+    //PrintCarPosition(car);
 
 
-    cout << "Actual radar measurement: " << "\n";
-    std::cout << "range      = " << marker.rho << "\n";
-    std::cout << "angle      = " << marker.phi << "\n";
-    std::cout << "range rate = " << marker.rho_dot << "\n\n";  
+    // cout << "Actual radar measurement: " << "\n";
+    // std::cout << "range      = " << marker.rho << "\n";
+    // std::cout << "angle      = " << marker.phi << "\n";
+    // std::cout << "range rate = " << marker.rho_dot << "\n\n";  
     // if this is the first measurement, then set the state to the measurement
     car.ukf.ProcessMeasurement(meas_package);
 
@@ -97,7 +101,9 @@ void Tools::ukfResults(Car car, pcl::visualization::PCLVisualizer::Ptr& viewer, 
 {
     auto x = car.ukf.GetState();
     auto P = car.ukf.GetCovariance();
-    viewer->addSphere(pcl::PointXYZ(x[0], x[1], 3.5), 0.5, 0, 1, 0,car.name+"_ukf");
+    double sphereSize = 0.2;
+    viewer->addSphere(pcl::PointXYZ(x[0], x[1], 3.5),
+                      sphereSize, 0, 1, 0, car.name+"_ukf");
     viewer->addArrow(pcl::PointXYZ(x[0], x[1], 3.5), pcl::PointXYZ(x[0] + x[2]*cos(x[3]), x[1] + x[2]*sin(x[3]), 3.5), 0, 1, 0, car.name+"_ukf_vel");
     if(time > 0)
     {
@@ -109,8 +115,7 @@ void Tools::ukfResults(Car car, pcl::visualization::PCLVisualizer::Ptr& viewer, 
             x = pData.x;
             P = pData.P;
 
-            cout << "Adding sphere at " << x[0] << ", " << x[1] << "\n";
-            viewer->addSphere(pcl::PointXYZ(x[0], x[1], 3.5), 0.5, 0, 1, 0, car.name+"_ukf"+std::to_string(ct));
+            viewer->addSphere(pcl::PointXYZ(x[0], x[1], 3.5), sphereSize, 0, 1, 0, car.name+"_ukf"+std::to_string(ct));
             viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1.0-0.8*(ct/time), car.name+"_ukf"+std::to_string(ct));
             
             //viewer->addArrow(pcl::PointXYZ(ukf.x_[0], ukf.x_[1],3.5), pcl::PointXYZ(ukf.x_[0]+ukf.x_[2]*cos(ukf.x_[3]),ukf.x_[1]+ukf.x_[2]*sin(ukf.x_[3]),3.5), 0, 1, 0, car.name+"_ukf_vel"+std::to_string(ct));
@@ -136,14 +141,17 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
         return rmse;
     }
 
+    //cout << "\nCalculate RMSE" << "\n";
     //accumulate squared residuals
     for(unsigned int i=0; i < estimations.size(); ++i){
 
         VectorXd residual = estimations[i] - ground_truth[i];
 
+        //cout << "residual = " << residual << "\n";
         //coefficient-wise multiplication
         residual = residual.array()*residual.array();
         rmse += residual;
+        //cout << "residual^2 = " << residual << "\n";
     }
 
     //calculate the mean
@@ -151,6 +159,8 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 
     //calculate the squared root
     rmse = rmse.array().sqrt();
+
+    //cout << "rmse: " << rmse << "\n";
 
     //return the result
     return rmse;
